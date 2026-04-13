@@ -1,0 +1,13 @@
+{
+  "STAMPS.mod_title": "Spire Stamps",
+  "STAMPS-CUSTOM_STAMP_DIR.title": "Custom Stamps Directory",
+  "STAMPS-CUSTOM_STAMP_DIR.hover.desc": "Where to save and load stamps from",
+  "STAMPS-OPEN_STAMPS_FOLDER.title": "Open Stamps Folder",
+  "STAMPS-BUTTON_COLUMNS.title": "Stamp Picker Column Count",
+  "STAMPS-RELOAD_STAMPS.title": "Reload Stamps",
+  "STAMP_DISPLAY.title": "Name",
+  "STAMPS-ENABLE_DELETE_BUTTON.title": "Enable Delete Button",
+  "STAMPS-ENABLE_DELETE_BUTTON.hover.desc": "Show the delete button on stamp buttons",
+  "STAMP_FOLDER_FOUND_ERROR": "Stamps folder not found: ",
+  "STAMP_FOLDER_ERROR": "Could not open stamps folder "
+}

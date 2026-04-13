@@ -1,0 +1,9 @@
+{
+  "STAMP_PICKER.title": "Name",
+  "STAMP_PICKER.label": "Choose a Stamp",
+  "STAMP_BUTTON.title": "Stamp",
+  "STAMP_BUTTON.description": "Choose a stamp",
+  "RECORD_BUTTON.title": "Record",
+  "RECORD_BUTTON.description": "Start recording a drawing to save as a stamp",
+  "RECORD_BUTTON.description.active": "End recording"
+}
