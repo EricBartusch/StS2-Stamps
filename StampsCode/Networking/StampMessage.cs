@@ -61,6 +61,6 @@ public class StampMessage : INetMessage
             }
             strokes.Add(new StampStroke(points, reader.ReadBool()));
         }
-        Stamp = new StampDefinition(Name, strokes); 
+        Stamp = new StampDefinition(Name, strokes, PlayerId); 
     }
 }

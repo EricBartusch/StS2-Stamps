@@ -1,4 +1,5 @@
 ﻿using MegaCrit.Sts2.Core.Multiplayer.Game;
+using MegaCrit.Sts2.Core.Platform;
 using Stamps.StampsCode.Stamps;
 
 namespace Stamps.StampsCode.Networking;
@@ -60,5 +61,10 @@ public static class MultiplayerManager
             SharedStamps.Add(message.Stamp);
             SharedStampsChanged?.Invoke();
         }
+    }
+    
+    public static string GetPlayerName(ulong playerId)
+    {
+        return playerId > 0 ? PlatformUtil.GetPlayerName(PlatformType.Steam, playerId) : "";
     }
 }

@@ -72,18 +72,23 @@ public static class NMapScreenPatches
 
     static void OnRecordButtonPressed(NMapRecordButton button)
     {
+        var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
+        var dialogValid = _dialogs.TryGetValue(screen, out var dialog);
+        
+        if (dialogValid && dialog.Visible)
+        {
+            return;
+        }
+        
         if (StampRecorder.IsRecording)
         {
             StampRecorder.CancelRecording();
-
-            var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
-            if (_dialogs.TryGetValue(screen, out var dialog))
+            if (dialogValid)
                 dialog.Prompt(button);
         }
         else if (MultiplayerManager.SharedStamps.Count > 0)
         {
-            var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
-            if (_dialogs.TryGetValue(screen, out var dialog))
+            if (dialogValid)
             {
                 var message = MultiplayerManager.ReadSharedStampDefinition();
                 dialog.Prompt(button, message);
