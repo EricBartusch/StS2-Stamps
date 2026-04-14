@@ -2,9 +2,11 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using MegaCrit.Sts2.Core.Runs;
 using Stamps.StampsCode.Stamps;
 
 namespace Stamps.StampsCode.StampUI;
@@ -110,6 +112,11 @@ public partial class NStampPickerButton : NButton
         deleteButton.Initialize(this, _stampPickerScreen);
         deleteButton.Visible = Config.EnableDeleteButton;
         AddChild(deleteButton);
+        
+        var shareButton = new NShareButton();
+        shareButton.Initialize(this, _stampPickerScreen);
+        shareButton.Visible = Config.EnableShareButton && RunManager.Instance.NetService.Type.IsMultiplayer();
+        AddChild(shareButton);
 
     }
     

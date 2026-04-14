@@ -8,6 +8,10 @@
   "STAMP_DISPLAY.title": "Name",
   "STAMPS-ENABLE_DELETE_BUTTON.title": "Enable Delete Button",
   "STAMPS-ENABLE_DELETE_BUTTON.hover.desc": "Show the delete button on stamp buttons",
+  "STAMPS-ENABLE_SHARE_BUTTON.title": "Enable Share Button",
+  "STAMPS-ENABLE_SHARE_BUTTON.hover.desc": "Show the share button on stamp buttons",
+  "STAMPS-ACCEPT_STAMPS.title": "Accept Stamps",
+  "STAMPS-ACCEPT_STAMPS.hover.desc": "Allow other players to send you stamps during gameplay",
   "STAMP_FOLDER_FOUND_ERROR": "Stamps folder not found: ",
   "STAMP_FOLDER_ERROR": "Could not open stamps folder "
 }

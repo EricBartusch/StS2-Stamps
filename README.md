@@ -89,5 +89,4 @@ To add a new default stamp:
 Thank you Blizz for the stamp icon!
 
 ## TODO
-- Ability to share stamps in game during multiplayer
 - Option to animate stamps being drawn instead of instant

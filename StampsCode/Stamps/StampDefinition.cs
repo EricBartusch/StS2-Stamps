@@ -1,4 +1,6 @@
 using Godot;
+using MegaCrit.Sts2.Core.Platform;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace Stamps.StampsCode.Stamps;
 
@@ -6,11 +8,13 @@ public class StampDefinition
 {
     public string Name { get; set; }
     public List<StampStroke> Strokes { get; set; }
+    private ulong _playerId { get; set; }
     
-    public StampDefinition(string name, List<StampStroke> strokes)
+    public StampDefinition(string name, List<StampStroke> strokes, ulong playerId = 0)
     {
         Name    = name;
         Strokes = strokes;
+        _playerId = playerId;
     }
 
     public bool OnlyEraseStrokes()
@@ -21,6 +25,27 @@ public class StampDefinition
                 return false;
         }
         return true;
+    }
+    
+    public string GetPlayerName()
+    {
+        return _playerId > 0 ? PlatformUtil.GetPlayerName(RunManager.Instance.NetService.Platform, _playerId) : "";
+    }
+    
+    public StampDto ToDto()
+    {
+        return new StampDto
+        {
+            Strokes = Strokes.Select(s => new StrokeDto
+            {
+                Erase = s.Erase,
+                Points = s.Points.Select(p => new PointDto
+                {
+                    X = p.X / CustomStampLoader.NormalizedScale + 0.5f,
+                    Y = p.Y / CustomStampLoader.NormalizedScale + 0.5f,
+                }).ToArray()
+            }).ToList()
+        };
     }
 }
 

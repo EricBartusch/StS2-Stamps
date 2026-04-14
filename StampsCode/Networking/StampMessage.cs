@@ -10,15 +10,17 @@ public class StampMessage : INetMessage
 {
     public ulong PlayerId;
     public StampDefinition Stamp;
-
+    public string Name;
+    
     public bool ShouldBroadcast => true;
     public NetTransferMode Mode => NetTransferMode.Reliable;
     public LogLevel LogLevel => LogLevel.Info;
 
     public void Serialize(PacketWriter writer)
     {
-        var stamp = StampRegistry.ActiveStamp;
+        var stamp = Stamp;
         writer.WriteULong(PlayerId);
+        writer.WriteString(Name);
         writer.WriteInt(stamp.Strokes.Count);
 
         foreach (var stroke in stamp.Strokes)
@@ -37,6 +39,7 @@ public class StampMessage : INetMessage
     void IPacketSerializable.Deserialize(PacketReader reader)
     {
         PlayerId = reader.ReadULong();
+        Name = reader.ReadString();
         var strokesCount = reader.ReadInt();
         var strokes = new List<StampStroke>();
 
@@ -55,6 +58,6 @@ public class StampMessage : INetMessage
             }
             strokes.Add(new StampStroke(points, reader.ReadBool()));
         }
-        Stamp = new StampDefinition("foo", strokes); 
+        Stamp = new StampDefinition(Name, strokes, PlayerId); 
     }
 }

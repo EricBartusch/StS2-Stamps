@@ -54,20 +54,26 @@ public static class StampRecorder
         _pendingStrokes.Add((clickPosition, pts, erase));
     }
 
-    public static void StampCompleted(string name)
+    public static void StampCompleted(string name, StampDefinition? messageStamp = null)
     {
         IsRecording = false;
 
-        if (_pendingStrokes.Count == 0)
+        StampDto stamp;
+        if (messageStamp is not null)
         {
-            _pendingStrokes.Clear();
-            return;
+            stamp = messageStamp.ToDto();
         }
 
-        var strokes = BuildNormalizedStrokes();
-        var stamp = new StampDto();
-        foreach (var s in strokes)
-            stamp.Strokes.Add(s);
+        else
+        {
+            if (_pendingStrokes.Count == 0)
+                return;
+
+            var strokes = BuildNormalizedStrokes();
+            stamp = new StampDto();
+            foreach (var s in strokes)
+                stamp.Strokes.Add(s);
+        }
 
         string folder = Config.CustomStampDir;
         Directory.CreateDirectory(folder);
@@ -95,7 +101,7 @@ public static class StampRecorder
         }).ToList();
         return new StampDefinition("Preview", stampStrokes);
     }
-
+    
     private static List<StrokeDto> BuildNormalizedStrokes()
     {
         float sumX = 0, sumY = 0;

@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
+using Stamps.StampsCode.Networking;
 
 namespace Stamps.StampsCode.Recorder;
 
@@ -15,6 +16,7 @@ public partial class NMapRecordButton : NButton
 
     private static readonly Color _recordingColor = new Color("FFA500");
     private static readonly Color _inactiveColor  = new Color("FFFFFF80");
+    private static readonly Color _pendingMessageColor = Colors.Violet;
 
     private TextureRect _icon = null!;
     private Tween? _tween;
@@ -22,10 +24,12 @@ public partial class NMapRecordButton : NButton
     private Control _drawingToolHolder;
     private HoverTip _hoverTip;
     private HoverTip _hoverTipActive;
+    private HoverTip _pendingMessageTip;
     private NHoverTipSet nHoverTipSet;
 
     private bool _stampActive;
     private bool _isRecording;
+    private bool _hasPendingMessages = false;
 
     public override void _Ready()
     {
@@ -55,8 +59,11 @@ public partial class NMapRecordButton : NButton
         var title = new LocString("static_hover_tips", "RECORD_BUTTON.title");
         _hoverTip       = new HoverTip(title, new LocString("static_hover_tips", "RECORD_BUTTON.description"));
         _hoverTipActive = new HoverTip(title, new LocString("static_hover_tips", "RECORD_BUTTON.description.active"));
+        var pendingTitle = new LocString("static_hover_tips", "RECORD_BUTTON.pending.title");
+        _pendingMessageTip = new HoverTip(pendingTitle, new LocString("static_hover_tips", "RECORD_BUTTON.pending.description"));
         
         StampRecorder.StampRecorded += OnStampRecorded;
+        MultiplayerManager.SharedStampsChanged += OnSharedStampsChanged;
     }
 
     public override void _ExitTree()
@@ -64,7 +71,50 @@ public partial class NMapRecordButton : NButton
         StampRecorder.StampRecorded -= OnStampRecorded;
     }
 
-    private void OnStampRecorded() => SetRecording(false);
+    private void OnStampRecorded()
+    {
+        SetRecording(false);
+        if (_hasPendingMessages)
+        {
+            SetPendingTween();
+        }
+    }
+
+    private void OnSharedStampsChanged()
+    {
+        if (MultiplayerManager.SharedStamps.Count > 0 && !_hasPendingMessages)
+        {
+            _hasPendingMessages = true;
+            if (!_isRecording)
+            {
+                SetPendingTween();
+            }
+        }
+        else if (MultiplayerManager.SharedStamps.Count == 0 && _hasPendingMessages)
+        {
+            _hasPendingMessages = false;
+            
+            if(!_isRecording)
+                _tween?.Kill();
+        }
+    }
+
+    private void SetPendingTween()
+    {
+        var bright = _pendingMessageColor;
+        var dim = _pendingMessageColor * 0.5f;
+        _icon.Texture = PreloadManager.Cache.GetTexture2D(_glowImagePath);
+        _icon.SelfModulate = _pendingMessageColor;
+        _tween?.Kill();
+        _tween = CreateTween();
+        _tween.SetLoops();
+        _tween.TweenProperty(_icon, "self_modulate", dim, 1.5)
+            .SetTrans(Tween.TransitionType.Sine)
+            .SetEase(Tween.EaseType.InOut);
+        _tween.TweenProperty(_icon, "self_modulate", bright, 1.5)
+            .SetTrans(Tween.TransitionType.Sine)
+            .SetEase(Tween.EaseType.InOut);
+    }
 
     public void SetRecording(bool recording)
     {
@@ -75,12 +125,17 @@ public partial class NMapRecordButton : NButton
             recording ? _recordingColor : _inactiveColor, 0.1);
         _icon.Texture = PreloadManager.Cache.GetTexture2D(recording ? _glowImagePath : _imagePath);
         _icon.SelfModulate = recording ? _recordingColor : _inactiveColor;
-        if(IsFocused)
+        if (IsFocused)
         {
             var tip = _isRecording ? _hoverTipActive : _hoverTip;
             NHoverTipSet.Remove(_drawingToolHolder);
             nHoverTipSet = NHoverTipSet.CreateAndShow(_drawingToolHolder, tip);
             nHoverTipSet.GlobalPosition = _drawingToolHolder.GlobalPosition + new Vector2(10f, -132f);
+        }
+
+        if (!recording && _hasPendingMessages)
+        {
+            SetPendingTween();
         }
     }
     
@@ -90,10 +145,18 @@ public partial class NMapRecordButton : NButton
         var tip = _isRecording ? _hoverTipActive : _hoverTip;
         nHoverTipSet = NHoverTipSet.CreateAndShow(_drawingToolHolder, tip);
         nHoverTipSet.GlobalPosition = _drawingToolHolder.GlobalPosition + new Vector2(10f, -132f);
+
         if (!_isRecording)
         {
             _icon.Texture = PreloadManager.Cache.GetTexture2D(_glowImagePath);
-            _icon.SelfModulate = _recordingColor;
+            _icon.SelfModulate = _hasPendingMessages ? _pendingMessageColor : _recordingColor;
+
+            if (_hasPendingMessages)
+            {
+                NHoverTipSet.Remove(_drawingToolHolder);
+                nHoverTipSet = NHoverTipSet.CreateAndShow(_drawingToolHolder, _pendingMessageTip);
+                nHoverTipSet.GlobalPosition = _drawingToolHolder.GlobalPosition + new Vector2(10f, -132f);
+            }
         }
         _tween?.Kill();
         _tween = CreateTween().SetParallel();
@@ -112,5 +175,10 @@ public partial class NMapRecordButton : NButton
         _tween?.Kill();
         _tween = CreateTween().SetParallel();
         _tween.TweenProperty(_icon, "scale", Vector2.One * 1.1f, 0.05f);
+
+        if (!_isRecording && _hasPendingMessages)
+        {
+            SetPendingTween();
+        }
     }
 }

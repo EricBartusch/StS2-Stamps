@@ -1,4 +1,5 @@
 ﻿using MegaCrit.Sts2.Core.Multiplayer.Game;
+using MegaCrit.Sts2.Core.Platform;
 using Stamps.StampsCode.Stamps;
 
 namespace Stamps.StampsCode.Networking;
@@ -9,6 +10,8 @@ public static class MultiplayerManager
     private static ulong _localPlayerId;
     
     private static readonly Dictionary<ulong, StampDefinition> _playerStampDefinitions = new();
+    public static HashSet<StampDefinition> SharedStamps = new();
+    public static event Action? SharedStampsChanged;
     
     public static ulong LocalPlayerId => _localPlayerId;
     
@@ -17,10 +20,9 @@ public static class MultiplayerManager
         _netGameService = netGameService;
         _localPlayerId = netGameService.NetId;
         netGameService.RegisterMessageHandler<StampMessage>(OnStampMessageReceived);
-
     }
     
-    public static void BroadcastStamp()
+    public static void BroadcastStamp(StampDefinition stamp)
     {
         if (_localPlayerId == 0 || _netGameService == null)
         {
@@ -30,19 +32,33 @@ public static class MultiplayerManager
         var message = new StampMessage
         {
             PlayerId = LocalPlayerId,
-            Stamp = StampRegistry.ActiveStamp
+            Stamp = stamp,
+            Name = stamp.Name,
         };
         
         _netGameService.SendMessage(message);
     }
-
+    
     public static StampDefinition? GetPlayerStampDefinition(ulong playerId)
     {
         return _playerStampDefinitions.GetValueOrDefault(playerId);
     }
+
+    public static StampDefinition? ReadSharedStampDefinition()
+    {
+        var message = SharedStamps.First();
+        SharedStamps.Remove(message);
+        SharedStampsChanged?.Invoke();
+        return message;
+    }
     
     private static void OnStampMessageReceived(StampMessage message, ulong senderId)
     {
-        _playerStampDefinitions[senderId] = message.Stamp;
+        if (Config.AcceptStamps)
+        {
+            _playerStampDefinitions[senderId] = message.Stamp;
+            SharedStamps.Add(message.Stamp);
+            SharedStampsChanged?.Invoke();
+        }
     }
 }

@@ -1,5 +1,6 @@
 {
   "STAMP_SAVE_DIALOG.placeholder": "Stamp name (required)",
   "STAMP_SAVE_DIALOG.save": "Save",
-  "STAMP_SAVE_DIALOG.discard": "Discard"
+  "STAMP_SAVE_DIALOG.discard": "Discard",
+  "STAMP_SAVE_DIALOG.message": "Message from: "
 }

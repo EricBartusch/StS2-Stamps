@@ -15,6 +15,7 @@ public partial class ConfigStampPreviewControl : Panel
     public override void _Ready()
     {
         Config.EnableDeleteButtonChanged += Reload;
+        Config.EnableShareButtonChanged += Reload;
         Config.ButtonColumnsChanged += Reload;
 
         var style = new StyleBoxFlat
@@ -85,6 +86,7 @@ public partial class ConfigStampPreviewControl : Panel
     public override void _ExitTree()
     {
         Config.EnableDeleteButtonChanged -= Reload;
+        Config.EnableShareButtonChanged -= Reload;
         Config.ButtonColumnsChanged -= Reload;
     }
 }

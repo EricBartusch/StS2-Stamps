@@ -2,6 +2,7 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using Stamps.StampsCode.Networking;
 using Stamps.StampsCode.Recorder;
 using NStampPickerScreen = Stamps.StampsCode.StampUI.NStampPickerScreen;
 
@@ -71,13 +72,27 @@ public static class NMapScreenPatches
 
     static void OnRecordButtonPressed(NMapRecordButton button)
     {
+        var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
+        var dialogValid = _dialogs.TryGetValue(screen, out var dialog);
+        
+        if (dialogValid && dialog.Visible)
+        {
+            return;
+        }
+        
         if (StampRecorder.IsRecording)
         {
             StampRecorder.CancelRecording();
-
-            var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
-            if (_dialogs.TryGetValue(screen, out var dialog))
+            if (dialogValid)
                 dialog.Prompt(button);
+        }
+        else if (MultiplayerManager.SharedStamps.Count > 0)
+        {
+            if (dialogValid)
+            {
+                var message = MultiplayerManager.ReadSharedStampDefinition();
+                dialog.Prompt(button, message);
+            }
         }
         else
         {
