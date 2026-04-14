@@ -90,4 +90,8 @@ Thank you Blizz for the stamp icon!
 
 ## TODO
 - Ability to share stamps in game during multiplayer
+    - Button to share
+    - Config to allow messages to be recieved
+    - Config to enable share button
+    - Improve recieved save window with more info
 - Option to animate stamps being drawn instead of instant

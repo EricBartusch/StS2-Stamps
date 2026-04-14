@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
+using Stamps.StampsCode.Stamps;
 using Stamps.StampsCode.StampUI;
 
 namespace Stamps.StampsCode.Recorder;
@@ -9,6 +10,7 @@ public partial class NStampSaveDialog : Panel
     private LineEdit _nameInput = null!;
     private NMapRecordButton _recordButton = null!;
     private NStampPreviewControl _preview = null!;
+    private StampDefinition? _sentStamp;
 
     private static readonly Shader BlurShader = GD.Load<Shader>(
         "res://shaders/dark_blur.gdshader"
@@ -108,7 +110,7 @@ public partial class NStampSaveDialog : Panel
         Visible = false;
     }
 
-    public void Prompt(NMapRecordButton button)
+    public void Prompt(NMapRecordButton button, StampDefinition? sentStamp = null)
     {
         _recordButton   = button;
         _nameInput.Text = string.Empty;
@@ -121,11 +123,14 @@ public partial class NStampSaveDialog : Panel
             _nameInput.GrabFocus();
 
         }
-        else
+        else if (sentStamp != null)
         {
-            _recordButton.SetRecording(false);
-            StampRecorder.DiscardRecording();
+            _preview.SetStamp(sentStamp);
+            _nameInput.Text = sentStamp?.Name ?? string.Empty;
+            Visible = true;
+            _sentStamp = sentStamp;
         }
+        StampRecorder.DiscardRecording();
     }
 
     private void OnSave()
@@ -135,7 +140,8 @@ public partial class NStampSaveDialog : Panel
 
         Visible = false;
         _recordButton.SetRecording(false);
-        StampRecorder.StampCompleted(name);
+        StampRecorder.StampCompleted(name, _sentStamp);
+        _sentStamp = null;
     }
 
     private void OnDiscard()

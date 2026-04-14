@@ -5,5 +5,7 @@
   "STAMP_BUTTON.description": "Choose a stamp",
   "RECORD_BUTTON.title": "Record",
   "RECORD_BUTTON.description": "Start recording a drawing to save as a stamp",
-  "RECORD_BUTTON.description.active": "End recording"
+  "RECORD_BUTTON.description.active": "End recording",
+  "RECORD_BUTTON.pending.title": "You Have Pending Stamps",
+  "RECORD_BUTTON.pending.description": "Click to view"
 }

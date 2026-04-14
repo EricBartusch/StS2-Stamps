@@ -22,6 +22,22 @@ public class StampDefinition
         }
         return true;
     }
+    
+    public StampDto ToDto()
+    {
+        return new StampDto
+        {
+            Strokes = Strokes.Select(s => new StrokeDto
+            {
+                Erase = s.Erase,
+                Points = s.Points.Select(p => new PointDto
+                {
+                    X = p.X / CustomStampLoader.NormalizedScale + 0.5f,
+                    Y = p.Y / CustomStampLoader.NormalizedScale + 0.5f,
+                }).ToArray()
+            }).ToList()
+        };
+    }
 }
 
 public class StampStroke
