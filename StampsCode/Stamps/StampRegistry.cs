@@ -21,7 +21,11 @@ public static class StampRegistry
     public static void SetActive(StampDefinition stamp)
     {
         ActiveStamp = stamp;
-        MultiplayerManager.BroadcastStamp();
+    }
+
+    public static StampDefinition GetStampByName(string name)
+    {
+        return _stamps.FirstOrDefault(s => s.Name == name);
     }
 
     public static void Register(StampDefinition stamp)

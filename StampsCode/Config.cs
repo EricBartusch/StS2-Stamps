@@ -7,11 +7,11 @@ using Stamps.StampsCode.Stamps;
 
 namespace Stamps.StampsCode;
 
+[HoverTipsByDefault]
 public class Config : SimpleModConfig
 {
     private ConfigStampPreviewControl _stampPreview; 
     private static readonly string DefaultStampDir = Path.Combine(OS.GetUserDataDir(), "mod_configs", "CustomStamps");
-
 
     public static string CustomStampDir { get; set; } = DefaultStampDir;
     [ConfigButton("Open Stamps Folder")]
@@ -58,6 +58,19 @@ public class Config : SimpleModConfig
             EnableDeleteButtonChanged?.Invoke();
         }
     }
+    public static event Action? EnableShareButtonChanged;
+    private static bool _enableShareButton = false;
+    public static bool EnableShareButton
+    {
+        get => _enableShareButton;
+        set
+        {
+            _enableShareButton = value;
+            EnableShareButtonChanged?.Invoke();
+        }
+    }
+
+    public static bool AcceptStamps { get; set; } = true;
     
     public static void SeedDefaultStampsIfNeeded(bool force = false)
     {

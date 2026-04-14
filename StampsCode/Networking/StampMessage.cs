@@ -11,7 +11,6 @@ public class StampMessage : INetMessage
     public ulong PlayerId;
     public StampDefinition Stamp;
     public string Name;
-    public bool Sharing;
     
     public bool ShouldBroadcast => true;
     public NetTransferMode Mode => NetTransferMode.Reliable;
@@ -19,10 +18,9 @@ public class StampMessage : INetMessage
 
     public void Serialize(PacketWriter writer)
     {
-        var stamp = StampRegistry.ActiveStamp;
+        var stamp = Stamp;
         writer.WriteULong(PlayerId);
         writer.WriteString(Name);
-        writer.WriteBool(Sharing);
         writer.WriteInt(stamp.Strokes.Count);
 
         foreach (var stroke in stamp.Strokes)
@@ -42,7 +40,6 @@ public class StampMessage : INetMessage
     {
         PlayerId = reader.ReadULong();
         Name = reader.ReadString();
-        Sharing = reader.ReadBool();
         var strokesCount = reader.ReadInt();
         var strokes = new List<StampStroke>();
 

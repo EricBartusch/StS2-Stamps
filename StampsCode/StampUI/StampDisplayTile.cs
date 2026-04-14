@@ -46,6 +46,11 @@ public partial class StampDisplayTile : NClickableControl
         deleteButton.Initialize(this, _configStampPreviewControl);
         deleteButton.Visible = Config.EnableDeleteButton;
         AddChild(deleteButton);
+        
+        var shareButton = new NShareButton();
+        shareButton.Initialize(this, _configStampPreviewControl);
+        shareButton.Visible = Config.EnableShareButton;
+        AddChild(shareButton);
     }
 
     public override void _Notification(int what)

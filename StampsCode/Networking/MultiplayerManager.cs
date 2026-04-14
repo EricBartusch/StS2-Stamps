@@ -22,7 +22,7 @@ public static class MultiplayerManager
         netGameService.RegisterMessageHandler<StampMessage>(OnStampMessageReceived);
     }
     
-    public static void BroadcastStamp(bool sharing = true)
+    public static void BroadcastStamp(StampDefinition stamp)
     {
         if (_localPlayerId == 0 || _netGameService == null)
         {
@@ -32,9 +32,8 @@ public static class MultiplayerManager
         var message = new StampMessage
         {
             PlayerId = LocalPlayerId,
-            Stamp = StampRegistry.ActiveStamp,
-            Name = StampRegistry.ActiveStamp.Name,
-            Sharing = sharing
+            Stamp = stamp,
+            Name = stamp.Name,
         };
         
         _netGameService.SendMessage(message);
@@ -55,16 +54,11 @@ public static class MultiplayerManager
     
     private static void OnStampMessageReceived(StampMessage message, ulong senderId)
     {
-        _playerStampDefinitions[senderId] = message.Stamp;
-        if (message.Sharing)
+        if (Config.AcceptStamps)
         {
+            _playerStampDefinitions[senderId] = message.Stamp;
             SharedStamps.Add(message.Stamp);
             SharedStampsChanged?.Invoke();
         }
-    }
-    
-    public static string GetPlayerName(ulong playerId)
-    {
-        return playerId > 0 ? PlatformUtil.GetPlayerName(PlatformType.Steam, playerId) : "";
     }
 }
