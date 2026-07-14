@@ -66,6 +66,23 @@ public static class NMapScreenPatches
     static void OnStampButtonPressed(StampUI.NMapStampButton button)
     {
         NMapScreen screen = button.GetParent().GetParent().GetParent<NMapScreen>();
+
+        // if recording when stamp button is pressed, it will end the recording
+        if (StampRecorder.IsRecording)
+        {
+            var dialogValid = _dialogs.TryGetValue(screen, out var dialog);
+            if (dialogValid && dialog.Visible)
+                return;
+
+            StampRecorder.CancelRecording();
+            if (dialogValid)
+            {
+                var recordButton = button.GetParent().GetNode<NMapRecordButton>("RecordButton");
+                dialog.Prompt(recordButton);
+            }
+            return;
+        }
+
         if (_pickers.TryGetValue(screen, out var picker))
             picker.Toggle();
     }
