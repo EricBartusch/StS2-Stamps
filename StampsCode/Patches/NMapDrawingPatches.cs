@@ -175,6 +175,16 @@ public static class NMapDrawingsPatches
         // Skip this entirely when stamping
         return Traverse.Create(state).Field("drawingMode").GetValue<DrawingMode>() != Stamp;
     }
+    
+    [HarmonyPostfix]
+    [HarmonyPatch("ClearDrawnLinesLocal")]
+    private static void ClearRecordingToo()
+    {
+        if (StampRecorder.IsRecording)
+        {
+            StampRecorder.RestartRecording();
+        }
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch("UpdateLocalCursor")]

@@ -24,6 +24,11 @@ public static class StampRecorder
         _pendingStrokes.Clear();
     }
 
+    public static void RestartRecording()
+    {
+        _pendingStrokes.Clear();
+    }
+
     public static void SuppressNextStroke() => _suppressNextStroke = true;
 
     public static void RecordClickPosition(Vector2 position) => PendingClickPosition = position;
