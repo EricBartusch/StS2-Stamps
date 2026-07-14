@@ -154,7 +154,7 @@ public class Config : SimpleModConfig
             }
         });
         resetButton.CustomMinimumSize = new Vector2(360, resetButton.CustomMinimumSize.Y);
-        resetButton.SetColor(0.45f, 1.5f, 0.8f);
+        resetButton.SetColor(new Color(0.45f, 1.5f, 0.8f));
 
         var centerContainer = new CenterContainer();
         centerContainer.CustomMinimumSize = new Vector2(0, 128);
