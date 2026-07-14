@@ -66,6 +66,7 @@ public static class NMapScreenPatches
     static void OnStampButtonPressed(StampUI.NMapStampButton button)
     {
         NMapScreen screen = button.GetParent().GetParent().GetParent<NMapScreen>();
+        var pickerValid = _pickers.TryGetValue(screen, out var picker);
 
         // if recording when stamp button is pressed, it will end the recording
         if (StampRecorder.IsRecording)
@@ -75,15 +76,17 @@ public static class NMapScreenPatches
                 return;
 
             StampRecorder.CancelRecording();
-            if (dialogValid)
+            var recordButton = button.GetParent().GetNode<NMapRecordButton>("RecordButton");
+            recordButton.SetRecording(false);
+            if (dialogValid && StampRecorder.HasDrawnLines())
             {
-                var recordButton = button.GetParent().GetNode<NMapRecordButton>("RecordButton");
-                dialog.Prompt(recordButton);
+                // Open the picker after the recording is saved or discarded
+                dialog.Prompt(recordButton, onClosed: () => picker?.Toggle());
+                return;
             }
-            return;
         }
 
-        if (_pickers.TryGetValue(screen, out var picker))
+        if (pickerValid)
             picker.Toggle();
     }
 
@@ -100,8 +103,13 @@ public static class NMapScreenPatches
         if (StampRecorder.IsRecording)
         {
             StampRecorder.CancelRecording();
-            if (dialogValid)
+            if (dialogValid && StampRecorder.HasDrawnLines())
                 dialog.Prompt(button);
+            else
+            {
+                StampRecorder.CancelRecording();
+                button.SetRecording(false);
+            }
         }
         else if (MultiplayerManager.SharedStamps.Count > 0)
         {
