@@ -152,7 +152,7 @@ public partial class NStampSaveDialog : Panel
             _messageText.Text = new LocString("map", "STAMP_SAVE_DIALOG.message").GetFormattedText() + _sentStamp?.GetPlayerName();
              _messageText.Visible = true;
         }
-        StampRecorder.DiscardRecording();
+
     }
 
     private void OnSave()
