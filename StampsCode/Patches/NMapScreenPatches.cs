@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using Stamps.StampsCode.Networking;
 using Stamps.StampsCode.Recorder;
+using Stamps.StampsCode.StampUI;
 using NStampPickerScreen = Stamps.StampsCode.StampUI.NStampPickerScreen;
 
 namespace Stamps.StampsCode.Patches;
@@ -28,11 +29,11 @@ public static class NMapScreenPatches
         toolsBox.OffsetLeft  -= 60;
         toolsBox.OffsetRight += 60; // Makes the black part of the toolbar bigger
         
-        var stampButton = new StampUI.NMapStampButton { Name = "StampButton" };
+        var stampButton = new NMapStampButton { Name = "StampButton" };
         toolsBox.AddChild(stampButton);
         stampButton.Connect(
             NClickableControl.SignalName.Released,
-            Callable.From<StampUI.NMapStampButton>(OnStampButtonPressed)
+            Callable.From<NMapStampButton>(OnStampButtonPressed)
         );
 
         var recordButton = new NMapRecordButton { Name = "RecordButton" };
@@ -63,10 +64,18 @@ public static class NMapScreenPatches
         _dialogs.Remove(__instance);
     }
 
-    static void OnStampButtonPressed(StampUI.NMapStampButton button)
+    static void OnStampButtonPressed(NMapStampButton button)
     {
         NMapScreen screen = button.GetParent().GetParent().GetParent<NMapScreen>();
         var pickerValid = _pickers.TryGetValue(screen, out var picker);
+
+        if (pickerValid && screen.Drawings.GetLocalDrawingMode() == NMapDrawingsPatches.Stamp)
+        {
+            picker.EndStampMode();
+            if (picker.Visible)
+                picker.Close();
+            return;
+        }
 
         // if recording when stamp button is pressed, it will end the recording
         if (StampRecorder.IsRecording)
@@ -85,7 +94,7 @@ public static class NMapScreenPatches
                 return;
             }
         }
-
+        
         if (pickerValid)
             picker.Toggle();
     }
@@ -94,12 +103,18 @@ public static class NMapScreenPatches
     {
         var screen = button.GetParent().GetParent().GetParent<NMapScreen>();
         var dialogValid = _dialogs.TryGetValue(screen, out var dialog);
-        
+
         if (dialogValid && dialog.Visible)
         {
             return;
         }
-        
+
+        if (_pickers.TryGetValue(screen, out var picker)
+            && screen.Drawings.GetLocalDrawingMode() == NMapDrawingsPatches.Stamp)
+        {
+            picker.EndStampMode();
+        }
+
         if (StampRecorder.IsRecording)
         {
             StampRecorder.CancelRecording();
@@ -131,7 +146,7 @@ public static class NMapScreenPatches
     [HarmonyPatch("UpdateDrawingButtonStates")]
     private static void UpdateDrawingButtonStatesPatch(NMapScreen __instance)
     {
-        var stampButton = __instance.GetNode<StampUI.NMapStampButton>("DrawingTools/HBoxContainer/StampButton");
+        var stampButton = __instance.GetNode<NMapStampButton>("DrawingTools/HBoxContainer/StampButton");
         stampButton.SetActive(__instance.Drawings.GetLocalDrawingMode() == NMapDrawingsPatches.Stamp);
     }
 

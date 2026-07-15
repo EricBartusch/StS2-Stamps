@@ -174,6 +174,16 @@ public partial class NStampPickerScreen : Panel
         _drawingInputRef(Screen) = null;
         updateDrawingButtonStates(Screen);
     }
+    
+    public void EndStampMode()
+    {
+        foreach (Node child in _grid.GetChildren())
+            if (child is NStampPickerButton btn)
+                btn.Deselect();
+
+        StampRegistry.SetActive(null);
+        OnStampUnSelected();
+    }
 
     private void ApplySize(int stampCount)
     {

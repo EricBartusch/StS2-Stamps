@@ -81,7 +81,7 @@ public partial class NMapStampButton : NButton
 		// The hover tip only exists while the button is focused; it may have been
 		// freed already when the picker is opened programmatically (e.g. from the
 		// save dialog closing)
-		if (GodotObject.IsInstanceValid(nHoverTipSet))
+		if (IsInstanceValid(nHoverTipSet))
 		{
 			if (open)
 				nHoverTipSet.Hide();
