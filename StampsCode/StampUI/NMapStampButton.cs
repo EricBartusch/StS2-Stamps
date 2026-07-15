@@ -78,10 +78,16 @@ public partial class NMapStampButton : NButton
 	public void SetPickerOpen(bool open)
 	{
 		_pickerOpen = open;
-		if (open)
-			nHoverTipSet.Hide();
-		else if (IsFocused)
-			nHoverTipSet.Show();
+		// The hover tip only exists while the button is focused; it may have been
+		// freed already when the picker is opened programmatically (e.g. from the
+		// save dialog closing)
+		if (IsInstanceValid(nHoverTipSet))
+		{
+			if (open)
+				nHoverTipSet.Hide();
+			else if (IsFocused)
+				nHoverTipSet.Show();
+		}
 
 		ApplyVisual();
 	}

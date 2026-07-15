@@ -13,6 +13,7 @@ public partial class NStampSaveDialog : Panel
     private NMapRecordButton _recordButton = null!;
     private NStampPreviewControl _preview = null!;
     private StampDefinition? _sentStamp;
+    private Action? _onClosed;
     private Label _messageText = null!;
 
     private static readonly Shader BlurShader = GD.Load<Shader>(
@@ -130,8 +131,9 @@ public partial class NStampSaveDialog : Panel
         Visible = false;
     }
 
-    public void Prompt(NMapRecordButton button, StampDefinition? sentStamp = null)
+    public void Prompt(NMapRecordButton button, StampDefinition? sentStamp = null, Action? onClosed = null)
     {
+        _onClosed       = null;
         _recordButton   = button;
         _nameInput.Text = string.Empty;
 
@@ -152,7 +154,10 @@ public partial class NStampSaveDialog : Panel
             _messageText.Text = new LocString("map", "STAMP_SAVE_DIALOG.message").GetFormattedText() + _sentStamp?.GetPlayerName();
              _messageText.Visible = true;
         }
-        StampRecorder.DiscardRecording();
+
+        // Only keep the callback if the dialog actually opened
+        if (Visible)
+            _onClosed = onClosed;
     }
 
     private void OnSave()
@@ -165,6 +170,7 @@ public partial class NStampSaveDialog : Panel
         StampRecorder.StampCompleted(name, _sentStamp);
         _sentStamp = null;
         _messageText.Visible = false;
+        NotifyClosed();
     }
 
     private void OnDiscard()
@@ -172,6 +178,14 @@ public partial class NStampSaveDialog : Panel
         Visible = false;
         _recordButton.SetRecording(false);
         StampRecorder.DiscardRecording();
+        NotifyClosed();
+    }
+
+    private void NotifyClosed()
+    {
+        var onClosed = _onClosed;
+        _onClosed = null;
+        onClosed?.Invoke();
     }
 
     private static string SanitizeName(string input)

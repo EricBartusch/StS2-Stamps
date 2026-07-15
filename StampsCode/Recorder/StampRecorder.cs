@@ -24,12 +24,22 @@ public static class StampRecorder
         _pendingStrokes.Clear();
     }
 
+    public static void RestartRecording()
+    {
+        _pendingStrokes.Clear();
+    }
+
     public static void SuppressNextStroke() => _suppressNextStroke = true;
 
     public static void RecordClickPosition(Vector2 position) => PendingClickPosition = position;
 
     // Per-stroke: raw game-space offsets + the click position they were relative to + erase flag.
     private static readonly List<(Vector2 ClickPos, PointDto[] RawOffsets, bool Erase)> _pendingStrokes = new();
+
+    public static bool HasDrawnLines()
+    {
+        return _pendingStrokes.Count > 0;
+    }
     
     public static void OnLineCompleted(Line2D line, Vector2 clickPosition, bool erase = false)
     {

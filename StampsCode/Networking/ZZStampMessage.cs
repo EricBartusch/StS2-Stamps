@@ -6,7 +6,7 @@ using Stamps.StampsCode.Stamps;
 
 namespace Stamps.StampsCode.Networking;
 
-public class StampMessage : INetMessage
+public class ZZStampMessage : INetMessage
 {
     public ulong PlayerId;
     public StampDefinition Stamp;

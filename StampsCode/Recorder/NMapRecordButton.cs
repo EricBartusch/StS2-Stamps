@@ -69,6 +69,7 @@ public partial class NMapRecordButton : NButton
     public override void _ExitTree()
     {
         StampRecorder.StampRecorded -= OnStampRecorded;
+        MultiplayerManager.SharedStampsChanged -= OnSharedStampsChanged;
     }
 
     private void OnStampRecorded()
