@@ -1,12 +1,10 @@
-﻿using BaseLib.Patches.Content;
+using BaseLib.Patches.Content;
 using Godot;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Context;
-using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.PeerInput;
-using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Flavor;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 using Stamps.StampsCode.Networking;
@@ -21,19 +19,15 @@ public static class NMapDrawingsPatches
 {
     [CustomEnum]
     public static DrawingMode Stamp;
-    
+
     // This is used to line up the stamp icon with where the stamp actually stamps to
     public static Vector2 StampHotspot = new(30, 55);
 
     public static Color PlayerColor;
 
-    static readonly Func<NMapDrawings, Player, bool, Line2D> _createLineForPlayer =
-        AccessTools.MethodDelegate<Func<NMapDrawings, Player, bool, Line2D>>(
-            AccessTools.Method(typeof(NMapDrawings), "CreateLineForPlayer",
-                [typeof(Player), typeof(bool)])
-        );
-
     public static ulong LocalNetId;
+    private static bool _replayingStamp;
+    private static bool _stampModeBroadcast;
 
     [HarmonyPostfix]
     [HarmonyPatch("Initialize")]
@@ -41,80 +35,86 @@ public static class NMapDrawingsPatches
     {
         LocalNetId  = netService.NetId;
         PlayerColor = playerCollection.GetPlayer(netService.NetId).Character.MapDrawingColor;
+        _stampModeBroadcast = false;
     }
-    
+
+    // use the normal line drawing methods so we not modded clients can still see stamps
     [HarmonyPrefix]
-    [HarmonyPatch("BeginLine")]
-    private static bool BeginLinePatch(NMapDrawings __instance, object state, Vector2 position,
-        DrawingMode? overrideDrawingMode, IPlayerCollection ____playerCollection)
+    [HarmonyPatch("BeginLineLocal")]
+    private static bool BeginLineLocalPatch(NMapDrawings __instance, Vector2 position, DrawingMode? overrideDrawingMode)
     {
-        var traverse = Traverse.Create(state);
-        var mode = overrideDrawingMode ?? traverse.Field("drawingMode").GetValue<DrawingMode>();
-
-        if (mode != Stamp)
-        {
-            // Don't draw behind the stamp picker screen
-            if (IsInsidePickerScreen(__instance, position))
-                return false;
-
-            if (mode == DrawingMode.Drawing || mode == DrawingMode.Erasing)
-            {
-                if (StampRecorder.IsRecording
-                    && traverse.Field("playerId").GetValue<ulong>() == LocalNetId)
-                {
-                    var toolbarRect = __instance.GetParent().GetParent().GetChild<NinePatchRect>(4).GetGlobalRect();
-                    var globalPos = __instance.GetGlobalTransform() * position;
-                    if (!toolbarRect.HasPoint(globalPos))
-                        StampRecorder.RecordClickPosition(position);
-                    else
-                        StampRecorder.SuppressNextStroke();
-                }
-            }
-
+        // if we are in the process of drawing a stamp or if the player is using one of the 
+        // mouse buttons to make a mark on the map, just do normal stuff
+        if (_replayingStamp || overrideDrawingMode.HasValue)
             return true;
-        }
+        if (__instance.GetLocalDrawingMode(false) != Stamp)
+            return true;
 
-        
-        if (SkipDrawingBecauseInBox(__instance, position, traverse, out var drawViewport))
-        {
+        // somehow we tried to make a stamp without an active one or we're in a place we don't want to put stamps
+        // like the toolbar itself or the stamp screen is up
+        if (StampRegistry.ActiveStamp == null
+            || IsInsideToolbar(__instance, position)
+            || IsInsidePickerScreen(__instance, position))
             return false;
-        }
-        
-        ulong playerId = traverse.Field("playerId").GetValue<ulong>();
-        Player player = ____playerCollection.GetPlayer(playerId);
 
-        if (LocalContext.IsMe(player))
+
+        // start up the replay and go through each stroke and call the vanilla methods
+        // because we call BeginLineLocal in this patch, we have those checks above
+        _replayingStamp = true;
+        try
         {
-            if (StampRegistry.ActiveStamp == null)
-                return false;
-
             foreach (var stroke in StampRegistry.ActiveStamp.Strokes)
             {
-                Line2D line = _createLineForPlayer(__instance, player, stroke.Erase);
-                foreach (var point in stroke.Points)
-                    line.AddPoint((position + point) * 0.5f);
+                if (stroke.Points.Count == 0)
+                    continue;
 
-                traverse.Field("currentlyDrawingLine").SetValue(line);
-                drawViewport.AddChildSafely(line);
-                NGame.Instance.RemoteCursorContainer.DrawingCursorStateChanged(playerId);
+                var mode = stroke.Erase ? DrawingMode.Erasing : DrawingMode.Drawing;
+                __instance.BeginLineLocal(position + stroke.Points[0], mode);
+                for (int i = 1; i < stroke.Points.Count; i++)
+                    __instance.UpdateCurrentLinePositionLocal(position + stroke.Points[i]);
+                __instance.StopLineLocal();
             }
         }
-        else
+        finally
         {
-            StampDefinition stamp = MultiplayerManager.GetPlayerStampDefinition(playerId);
-            foreach (var stroke in stamp?.Strokes)
-            {
-                Line2D line = _createLineForPlayer(__instance, player, stroke.Erase);
-                foreach (var point in stroke.Points)
-                    line.AddPoint((position + point) * 0.5f);
-
-                traverse.Field("currentlyDrawingLine").SetValue(line);
-                drawViewport.AddChildSafely(line);
-                NGame.Instance.RemoteCursorContainer.DrawingCursorStateChanged(playerId);
-            }
+            _replayingStamp = false;
         }
 
         return false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch("BeginLine")]
+    private static bool BeginLinePatch(NMapDrawings __instance, object state, Vector2 position,
+        DrawingMode? overrideDrawingMode)
+    {
+        if (_replayingStamp)
+            return true;
+
+        var traverse = Traverse.Create(state);
+        var mode = overrideDrawingMode ?? traverse.Field("drawingMode").GetValue<DrawingMode>();
+
+        //  never draw a raw line in stamp mode
+        if (mode == Stamp)
+            return false;
+
+        // Don't draw behind the stamp picker screen
+        if (IsInsidePickerScreen(__instance, position))
+            return false;
+
+        if (mode == DrawingMode.Drawing || mode == DrawingMode.Erasing)
+        {
+            if (StampRecorder.IsRecording
+                && traverse.Field("playerId").GetValue<ulong>() == LocalNetId)
+            {
+                if (!IsInsideToolbar(__instance, position))
+                    StampRecorder.RecordClickPosition(position);
+                else
+                    StampRecorder.SuppressNextStroke();
+            }
+        }
+
+        return true;
     }
 
     [HarmonyPrefix]
@@ -140,6 +140,40 @@ public static class NMapDrawingsPatches
         return true;
     }
 
+    [HarmonyPrefix]
+    [HarmonyPatch("SetDrawingModeLocal")]
+    private static bool SetDrawingModeLocalPatch(NMapDrawings __instance, DrawingMode drawingMode)
+    {
+        // if we aren't stamping but we just were, tell them we stopped
+        if (drawingMode != Stamp)
+        {
+            if (_stampModeBroadcast)
+            {
+                _stampModeBroadcast = false;
+                MultiplayerManager.BroadcastStampMode(false);
+            }
+            return true;
+        }
+
+        var t = Traverse.Create(__instance);
+        var netService = t.Field("_netService").GetValue<INetGameService>();
+        if (netService == null)
+            return true;
+
+        var state = t.Method("GetDrawingStateForPlayer", netService.NetId).GetValue<object>();
+        t.Method("SetDrawingMode", state, drawingMode).GetValue();
+        netService.SendMessage(new MapDrawingModeChangedMessage { drawingMode = DrawingMode.None });
+        t.Method("UpdateLocalCursor").GetValue();
+
+        // if we just started stamping, tell them 
+        if (!_stampModeBroadcast)
+        {
+            _stampModeBroadcast = true;
+            MultiplayerManager.BroadcastStampMode(true);
+        }
+        return false;
+    }
+
     private static bool IsInsidePickerScreen(NMapDrawings __instance, Vector2 position)
     {
         var stampPickerScreen = __instance.GetParent().GetParent().GetNode<NStampPickerScreen>("StampPickerScreen");
@@ -147,25 +181,11 @@ public static class NMapDrawingsPatches
             && stampPickerScreen.GetGlobalRect().HasPoint(__instance.GetGlobalTransform() * position);
     }
 
-    private static bool SkipDrawingBecauseInBox(NMapDrawings __instance, Vector2 position, Traverse traverse,
-        out SubViewport drawViewport)
+    // Icon toolbar at the bottom of the map screen
+    private static bool IsInsideToolbar(NMapDrawings __instance, Vector2 position)
     {
-        drawViewport = traverse.Field("drawViewport").GetValue<SubViewport>();
         var rect = __instance.GetParent().GetParent().GetChild<NinePatchRect>(4).GetGlobalRect();
-
-        // Icon toolbar at bottom
-        if (rect.HasPoint(__instance.GetGlobalTransform() * position))
-        {
-            return true;
-        }
-
-        // Stamp screen
-        if (IsInsidePickerScreen(__instance, position))
-        {
-            return true;
-        }
-
-        return false;
+        return rect.HasPoint(__instance.GetGlobalTransform() * position);
     }
 
     [HarmonyPrefix]
@@ -173,9 +193,12 @@ public static class NMapDrawingsPatches
     private static bool UpdateCurrentLinePositionPatch(object state)
     {
         // Skip this entirely when stamping
-        return Traverse.Create(state).Field("drawingMode").GetValue<DrawingMode>() != Stamp;
+        var traverse = Traverse.Create(state);
+        var mode = traverse.Field("overrideDrawingMode").GetValue<DrawingMode?>()
+                   ?? traverse.Field("drawingMode").GetValue<DrawingMode>();
+        return mode != Stamp;
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch("ClearDrawnLinesLocal")]
     private static void ClearRecordingToo()

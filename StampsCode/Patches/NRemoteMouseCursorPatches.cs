@@ -2,11 +2,25 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using Stamps.StampsCode.Networking;
 
 namespace Stamps.StampsCode.Patches;
 
 public class NRemoteMouseCursorPatches
 {
+    [HarmonyPatch(typeof(NRemoteMouseCursor), "UpdateImage")]
+    public static class UpdateImagePatch
+    {
+        static void Prefix(NRemoteMouseCursor __instance, ref DrawingMode drawingMode)
+        {
+            if (drawingMode == DrawingMode.None
+                && MultiplayerManager.IsPlayerInStampMode(__instance.PlayerId))
+            {
+                drawingMode = NMapDrawingsPatches.Stamp;
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(NRemoteMouseCursor), "GetTexture")]
     public static class GetTexturePatch
     {

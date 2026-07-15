@@ -12,5 +12,5 @@
       "minVersion": "3.3.5"
     }
   ],
-  "affects_gameplay": true
+  "affects_gameplay": false
 }
