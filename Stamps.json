@@ -2,14 +2,14 @@
   "id": "Stamps",
   "name": "Stamps",
   "author": "EricB",
-  "description": "dds stamps to the map screen in Slay the Spire 2",
-  "version": "v1.2.0",
+  "description": "Adds stamps to the map screen in Slay the Spire 2",
+  "version": "v1.2.2",
   "has_pck": true,
   "has_dll": true,
   "dependencies": [
     {
       "id": "BaseLib",
-      "minVersion": "3.3.5"
+      "minVersion": "3.4.0"
     }
   ],
   "affects_gameplay": false
