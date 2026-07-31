@@ -57,7 +57,7 @@ public static class NMapScreenPatches
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch("_ExitTree")]
+    [HarmonyPatch("CleanUp")]
     static void RemovePicker(NMapScreen __instance)
     {
         _pickers.Remove(__instance);
