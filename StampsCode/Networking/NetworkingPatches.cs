@@ -9,7 +9,7 @@ namespace Stamps.StampsCode.Networking;
 [HarmonyPatch]
 public static class NetworkingPatches
 {
-    [HarmonyPatch(typeof(StartRunLobby), MethodType.Constructor, typeof(GameMode), typeof(INetGameService),
+    [HarmonyPatch(typeof(StartRunLobby), MethodType.Constructor, typeof(GameMode), typeof(bool), typeof(INetGameService),
         typeof(IStartRunLobbyListener), typeof(int))]
     [HarmonyPostfix]
     static void OnStartRunLobbyConstructed(StartRunLobby __instance)
